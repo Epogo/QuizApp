@@ -17,34 +17,34 @@ def signPage():
 	username=StringVar()
 	password=StringVar()
 	
-	signpage_can=Canvas(signpage,width=920,height=440,bg="#FCDE17")
+	signpage_can=Canvas(signpage,width=920,height=440,bg="#FCFD17")
 	signpage_can.pack()
 	
-	signpage_frame=Frame(signpage_can,bg="#BCDA66")
+	signpage_frame=Frame(signpage_can,bg="#DCAA66")
 	signpage_frame.place(relwidth=0.8,relheight=0.8,relx=0.1,rely=0.1)
 	
-	heading=Label(signpage_frame,text="Sign Up page for the quiz app",fg="#CBF550",bg="#CDBA65")
+	heading=Label(signpage_frame,text="Sign Up Now!",fg="#CBF550",bg="#CDBA65")
 	heading.config(font=('calibri 30'))
 	heading.place(relx=0.2,rely=0.2)
 	
 	#Full name
 	fullNlabel=Label(signpage_frame,text="Full Name",fg='white',bg='black')
 	fullNlabel.place(relx=0.21,rely=0.4)
-	fullN=Entry(signpage_frame,bg='white',fg='black',textvariable=firstname)
+	fullN=Entry(signpage_frame,bg='pink',fg='black',textvariable=firstname)
 	fullN.config(width=42)
 	fullN.place(relx=0.31,rely=0.4)
 	
 	#User name
 	userLabel=Label(signpage_frame,text="Username",fg='white',bg='black')
 	userLabel.place(relx=0.21,rely=0.5)
-	user=Entry(signpage_frame,bg='white',fg='black',textvariable=username)
+	user=Entry(signpage_frame,bg='pink',fg='black',textvariable=username)
 	user.config(width=42)
 	user.place(relx=0.31,rely=0.5)
 	
 	#password
 	passLabel=Label(signpage_frame,text="Password",fg='white',bg='black')
 	passLabel.place(relx=0.215,rely=0.6)
-	passw=Entry(signpage_frame,bg='white',fg='black',textvariable=password,show="*")
+	passw=Entry(signpage_frame,bg='pink',fg='black',textvariable=password,show="*")
 	passw.config(width=42)
 	passw.place(relx=0.31,rely=0.6)
 	
@@ -56,19 +56,19 @@ def signPage():
 		
 		if len(firstname.get())==0 and len(username.get())==0 and len(password.get())==0:
 			error = Label(text="You haven't enter any field...Please Enter all the fields",fg='black',bg='white')
-			error.place(relx=0.37,rely=0.7)
+			error.place(relx=0.33,rely=0.6)
 		
 		elif len(username.get())==0 and len(password.get())==0:
 			error = Label(text="Please Enter the username and password field",fg='black',bg='white')
-			error.place(relx=0.37,rely=0.7)
+			error.place(relx=0.33,rely=0.6)
 		##More errors should be added.
 		elif len(username.get())==0 and len(password.get())!=0:
 			error = Label(text="Please Enter the username",fg='black',bg='white')
-			error.place(relx=0.37,rely=0.7)
+			error.place(relx=0.33,rely=0.6)
 			
 		elif len(username.get())!=0 and len(password.get())==0:
 			error = Label(text="Please Enter the password",fg='black',bg='white')
-			error.place(relx=0.37,rely=0.7)
+			error.place(relx=0.33,rely=0.6)
 		
 		else:
 			connection=sqlite3.connect('quiz.db')
@@ -94,6 +94,10 @@ def signPage():
 	signB=Button(signpage_frame,text='Sign Up',padx=5,pady=5,width=5,command=InsertUserToDataBase,bg="black",fg="white")
 	signB.configure(width=15,height=1,activebackground="#B6C366",relief=FLAT)
 	signB.place(relx=0.4,rely=0.8)
+	
+	back=Button(signpage_frame,text='Back',padx=5,pady=5,width=5,command=Logging,bg="black",fg="white")
+	back.configure(width=15,height=1,activebackground="#B6C366",relief=FLAT)
+	back.place(relx=0.4,rely=0.9)
 	
 	signpage.mainloop()
 	

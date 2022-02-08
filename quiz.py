@@ -3,228 +3,277 @@ from tkinter import *
 import random
 import sqlite3
 import time
-from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
+from matplotlib.backends.backend_tkagg import (
+    FigureCanvasTkAgg, NavigationToolbar2Tk)
 from matplotlib.backend_bases import key_press_handler
 from matplotlib.figure import Figure
+from firebase_admin import credentials
+from firebase_admin import firestore
+import firebase_admin
+import requests
+
+cred = credentials.Certificate("serviceAccountKey.json")
+firebase_admin.initialize_app(cred, {'projectId': 'python-quiz-fca62', })
+db = firestore.client()
+users_ref = db.collection(u'users')
+docs = users_ref.stream()
+
+def launch():
+	global mainpage 
+	mainpage = tk.Tk()
+	mainpage.title('Welcome to Geographical knowledge quiz App')
+	canvas = Canvas(mainpage,width = 900,height = 600, bg = 'purple')
+	canvas.grid(column = 0 , row = 1)
+	img = PhotoImage(file="output-onlinepngtools.png")
+	canvas.create_image(50,10,image=img,anchor=NW)
+
+	button = Button(mainpage, text='Play Now',command = Logging,bg="red",fg="yellow") 
+	button.configure(width = 102,height=4, activebackground = "#6BF5F5", relief = SUNKEN)
+	button.grid(column = 0 , row = 2)
+
+	mainpage.mainloop()
 
 def signPage():
 	login.destroy()
-	global signpage #Sign page variable
-	signpage = Tk()#Create interface
+	global signpage  # Sign page variable
+	signpage = tk.Tk()  # Create interface
 	signpage.title('Sign Up page for the quiz app')
-	
-	firstname=StringVar()
-	username=StringVar()
-	password=StringVar()
-	
-	signpage_can=Canvas(signpage,width=920,height=440,bg="#FCFD17")
+
+	firstname = StringVar()
+	username = StringVar()
+	password = StringVar()
+
+	signpage_can = Canvas(signpage, width=920, height=440, bg="#FCFD17")
 	signpage_can.pack()
-	
-	signpage_frame=Frame(signpage_can,bg="#DCAA66")
-	signpage_frame.place(relwidth=0.8,relheight=0.8,relx=0.1,rely=0.1)
-	
-	heading=Label(signpage_frame,text="Sign Up Now!",fg="#CBF550",bg="#CDBA65")
+
+	signpage_frame = Frame(signpage_can, bg="#DCAA66")
+	signpage_frame.place(relwidth=0.8, relheight=0.8, relx=0.1, rely=0.1)
+
+	heading = Label(signpage_frame, text="Sign Up Now!",
+	                fg="#CBF550", bg="#CDBA65")
 	heading.config(font=('calibri 30'))
-	heading.place(relx=0.2,rely=0.2)
-	
-	#Full name
-	fullNlabel=Label(signpage_frame,text="Full Name",fg='white',bg='black')
-	fullNlabel.place(relx=0.21,rely=0.4)
-	fullN=Entry(signpage_frame,bg='pink',fg='black',textvariable=firstname)
+	heading.place(relx=0.2, rely=0.2)
+
+	# Full name
+	fullNlabel = Label(signpage_frame, text="Full Name", fg='white', bg='black')
+	fullNlabel.place(relx=0.21, rely=0.4)
+	fullN = Entry(signpage_frame, bg='pink', fg='black', textvariable=firstname)
 	fullN.config(width=42)
-	fullN.place(relx=0.31,rely=0.4)
-	
-	#User name
-	userLabel=Label(signpage_frame,text="Username",fg='white',bg='black')
-	userLabel.place(relx=0.21,rely=0.5)
-	user=Entry(signpage_frame,bg='pink',fg='black',textvariable=username)
+	fullN.place(relx=0.31, rely=0.4)
+
+	# User name
+	userLabel = Label(signpage_frame, text="Username", fg='white', bg='black')
+	userLabel.place(relx=0.21, rely=0.5)
+	user = Entry(signpage_frame, bg='pink', fg='black', textvariable=username)
 	user.config(width=42)
-	user.place(relx=0.31,rely=0.5)
-	
-	#password
-	passLabel=Label(signpage_frame,text="Password",fg='white',bg='black')
-	passLabel.place(relx=0.215,rely=0.6)
-	passw=Entry(signpage_frame,bg='pink',fg='black',textvariable=password,show="*")
+	user.place(relx=0.31, rely=0.5)
+
+	# password
+	passLabel = Label(signpage_frame, text="Password", fg='white', bg='black')
+	passLabel.place(relx=0.215, rely=0.6)
+	passw = Entry(signpage_frame, bg='pink', fg='black',
+	              textvariable=password, show="*")
 	passw.config(width=42)
-	passw.place(relx=0.31,rely=0.6)
-	
+	passw.place(relx=0.31, rely=0.6)
+
 	def InsertUserToDataBase():
-	
-		fn=firstname.get()
-		un=username.get()
-		pw=password.get()
-		
-		if len(firstname.get())==0 and len(username.get())==0 and len(password.get())==0:
-			error = Label(text="You haven't enter any field...Please Enter all the fields",fg='black',bg='white')
-			error.place(relx=0.33,rely=0.6)
-		
-		elif len(username.get())==0 and len(password.get())==0:
-			error = Label(text="Please Enter the username and password field",fg='black',bg='white')
-			error.place(relx=0.33,rely=0.6)
-		##More errors should be added.
-		elif len(username.get())==0 and len(password.get())!=0:
-			error = Label(text="Please Enter the username",fg='black',bg='white')
-			error.place(relx=0.33,rely=0.6)
-			
-		elif len(username.get())!=0 and len(password.get())==0:
-			error = Label(text="Please Enter the password",fg='black',bg='white')
-			error.place(relx=0.33,rely=0.6)
-		
+
+		fn = firstname.get()
+		un = username.get()
+		pw = password.get()
+        data = {u'name': fn, u'username': un, u'password': pw}
+		if len(firstname.get()) == 0 and len(username.get()) == 0 and len(password.get()) == 0:
+			error = Label(
+			    text="You haven't enter any field...Please Enter all the fields", fg='black', bg='white')
+			error.place(relx=0.33, rely=0.6)
+
+		elif len(username.get()) == 0 and len(password.get()) == 0:
+			error = Label(text="Please Enter the username and password field",
+			              fg='black', bg='white')
+			error.place(relx=0.33, rely=0.6)
+		# More errors should be added.
+		elif len(username.get()) == 0 and len(password.get()) != 0:
+			error = Label(text="Please Enter the username", fg='black', bg='white')
+			error.place(relx=0.33, rely=0.6)
+
+		elif len(username.get()) != 0 and len(password.get()) == 0:
+			error = Label(text="Please Enter the password", fg='black', bg='white')
+			error.place(relx=0.33, rely=0.6)
+
 		else:
-			connection=sqlite3.connect('quiz.db')
-			createDb=connection.cursor()
-			createDb.execute('CREATE TABLE IF NOT EXISTS userSignUp(FULLNAME text, USERNAME text,PASSWORD text)')
-			createDb.execute("INSERT INTO userSignUp VALUES (?,?,?)",(fn,un,pw))
-			connection.commit()
-			createDb.execute('SELECT * FROM userSignUp')
-			userdata=createDb.fetchall()
-			print(userdata)
-			connection.close()
+			db.collection(u'users').document(un).set(data)
 			Logging()
-	
-	def Login():
-		connection=sqlite3.connect('quiz.db')
-		createDb=connection.cursor()
-		connection.commit()
-		createDb.execute('CREATE TABLE IF NOT EXISTS userSignUp(FULLNAME text, USERNAME text,PASSWORD text)')
-		createDb.execute('SELECT * FROM userSignUp')
-		userdata=createDb.fetchall()
-		Logging(userdata)
-		
-	signB=Button(signpage_frame,text='Sign Up',padx=5,pady=5,width=5,command=InsertUserToDataBase,bg="black",fg="white")
-	signB.configure(width=15,height=1,activebackground="#B6C366",relief=FLAT)
-	signB.place(relx=0.4,rely=0.8)
-	
-	back=Button(signpage_frame,text='Back',padx=5,pady=5,width=5,command=Logging,bg="black",fg="white")
-	back.configure(width=15,height=1,activebackground="#B6C366",relief=FLAT)
-	back.place(relx=0.4,rely=0.9)
-	
+
+	signB = Button(signpage_frame, text='Sign Up', padx=5, pady=5,
+	               width=5, command=InsertUserToDataBase, bg="black", fg="white")
+	signB.configure(width=15, height=1, activebackground="#B6C366", relief=FLAT)
+	signB.place(relx=0.4, rely=0.8)
+
+	back = Button(signpage_frame, text='Back', padx=5, pady=5,
+	              width=5, command=Logging, bg="black", fg="white")
+	back.configure(width=15, height=1, activebackground="#B6C366", relief=FLAT)
+	back.place(relx=0.4, rely=0.9)
+
 	signpage.mainloop()
-	
+
+
 def Logging():
+	tt=mainpage;
 	try:
-		mainpage.destroy()#Destroy the main page if it has been opened.
+		tt.destroy()  # Destroy the main page if it has been opened.
 	except:
 		pass
 	try:
-		signpage.destroy()#Destroy the Sign-up page if it has been opened.
+		signpage.destroy()  # Destroy the Sign-up page if it has been opened.
 	except:
 		pass
-	connection=sqlite3.connect('quiz.db')
-	createDb=connection.cursor()
+	connection = sqlite3.connect('quiz.db')
+	createDb = connection.cursor()
 	connection.commit()
-	createDb.execute('CREATE TABLE IF NOT EXISTS userSignUp(FULLNAME text, USERNAME text,PASSWORD text)')
+	createDb.execute(
+	    'CREATE TABLE IF NOT EXISTS userSignUp(FULLNAME text, USERNAME text,PASSWORD text)')
 	createDb.execute('SELECT * FROM userSignUp')
-	userdata=createDb.fetchall()
+	userdata = createDb.fetchall()
 	global login
-	login=Tk()
+	login = tk.Tk()
 	login.title('Quiz app logging')
-	
-	un=StringVar()
-	pw=StringVar()
-	
-	login_canvas = Canvas(login,width=720,height=440,bg="#B64D4D")
+
+	un = StringVar()
+	pw = StringVar()
+
+	login_canvas = Canvas(login, width=720, height=440, bg="#C64F4D")
 	login_canvas.pack()
 
-	login_frame=Frame(login_canvas,bg="orange")
-	login_frame.place(relwidth=0.8,relheight=0.8,relx=0.1,rely=0.1)
-	
-	heading=Label(login_frame,text="Quiz app logging", fg="white",bg="orange")
-	heading.config(font=('calibri 40'))
-	heading.place(relx=0.2,rely=0.1)
-	
-	#USER NAME
-	ulabel = Label(login_frame,text="Username",fg='white',bg='black')
-	ulabel.place(relx=0.21,rely=0.4)
-	uname = Entry(login_frame,bg='white',fg='black',textvariable = un)
-	uname.config(width=42)
-	uname.place(relx=0.31,rely=0.4)
+	login_frame = Frame(login_canvas, bg="green")
+	login_frame.place(relwidth=0.8, relheight=0.8, relx=0.1, rely=0.1)
 
-    #PASSWORD
-	plabel = Label(login_frame,text="Password",fg='white',bg='black')
-	plabel.place(relx=0.215,rely=0.5)
-	pas = Entry(login_frame,bg='white',fg='black',textvariable = pw,show="*")
+	heading = Label(login_frame, text="Logging", fg="white", bg="#C54F2C")
+	heading.config(font=('Verdana 25'))
+	heading.place(relx=0.38, rely=0.15)
+
+	# USER NAME
+	ulabel = Label(login_frame, text="Username", fg='white', bg='black')
+	ulabel.place(relx=0.21, rely=0.4)
+	uname = Entry(login_frame, bg='white', fg='black', textvariable=un)
+	uname.config(width=42)
+	uname.place(relx=0.31, rely=0.4)
+
+    # PASSWORD
+	plabel = Label(login_frame, text="Password", fg='white', bg='black')
+	plabel.place(relx=0.215, rely=0.5)
+	pas = Entry(login_frame, bg='white', fg='black', textvariable=pw, show="*")
 	pas.config(width=42)
-	pas.place(relx=0.31,rely=0.5)
-	
+	pas.place(relx=0.31, rely=0.5)
+
 	def checkLoggingData():
-		for x,y,z in userdata:
-			if y==uname.get() and z==pas.get():
+		for x, y, z in userdata:
+			if y == uname.get() and z == pas.get():
 				print(userdata)
-				
+
 				mainmenu(x)
 				break
 		else:
-			error=Label(login_frame,text="Seems that the username or/and password are wrong",fg='black',bg='white')
-			error.place(relx=0.37,rely=0.7)
-			
-	log = Button(login_frame,text='Login',padx=5,pady=5,width=5,command=checkLoggingData,fg="white",bg="black")
-	log.configure(width=15,height=1,activebackground="#78C6E7",relief=FLAT)
-	log.place(relx=0.4,rely=0.6)
-	
-	signup = Button(login_frame,text='Sign Up',padx=5,pady=5,width=5,command=signPage,fg="white",bg="black")
-	signup.configure(width=15,height=1,activebackground="#78C6E7",relief=FLAT)
-	signup.place(relx=0.4,rely=0.7)
+			error = Label(
+			    login_frame, text="Seems that the username or/and password are wrong", fg='black', bg='white')
+			error.place(relx=0.37, rely=0.7)
+
+	log = Button(login_frame, text='Login', padx=5, pady=5, width=5,
+	             command=checkLoggingData, fg="white", bg="black")
+	log.configure(width=15, height=1, activebackground="#78C6E7", relief=FLAT)
+	log.place(relx=0.4, rely=0.6)
+
+	signup = Button(login_frame, text='Sign Up', padx=5, pady=5,
+	                width=5, command=signPage, fg="white", bg="black")
+	signup.configure(width=15, height=1, activebackground="#78C6E7", relief=FLAT)
+	signup.place(relx=0.4, rely=0.7)
 	login.mainloop()
 
+
 def mainmenu(firstname):
-    login.destroy()
-    global menu
-    menu=Tk()
-    menu.title('Quiz application menu')
+	try:
+		login.destroy()
+	except:
+		pass
+	global menu
+	print(firstname)
+	menu = tk.Tk()
+	menu.title('Quiz application menu')
+
+	menu_canvas = Canvas(menu, width=820, height=440, bg="orange")
+	menu_canvas.pack()
+
+	menu_frame = Frame(menu_canvas, bg="#8BBBF4")
+	menu_frame.place(relwidth=0.8, relheight=0.8, relx=0.1, rely=0.1)
+
+	welcome = Label(menu_canvas, text=' W E L C O M E  T O  THE GEOGRAPHICAL QUIZ ', fg="white", bg="orange")
+	welcome.config(font=('Broadway 22'))
+	welcome.place(relx=0.1, rely=0.02)
+
+	firstname2 = 'Welcome ' + firstname
+	l1 = Label(menu_frame, text=firstname2, bg="black", font="calibri 18", fg="white")
+               
+	l1.place(relx=0.17, rely=0.15)
+
+	level = Label(menu_frame, text='Select the desired Difficulty Level', bg="orange", font="calibri 18")
+                  
+	level.place(relx=0.25, rely=0.3)
+
+	var = IntVar()
+	easyR = Radiobutton(menu_frame, text="Easy", bg="#CFBB4B", font="calibri 16", value=1, variable=var)
+                      
+	easyR.place(relx=0.25, rely=0.4)
+
+	mediumR = Radiobutton(menu_frame, text="Medium", bg="#A2AB4B", font="calibri 16", value=2, variable=var)
+                          
+	mediumR.place(relx=0.25, rely=0.5)
+
+	hardR = Radiobutton(menu_frame, text="Hard", bg="#C5DB4B", font="calibri 16", value=3, variable=var)
+                        
+	hardR.place(relx=0.25, rely=0.6)
+
+	def navigate():
+		x = var.get()
+		print(x)
+		if x == 1:
+			menu.destroy()
+			easy(firstname)
+		elif x == 2:
+			menu.destroy()
+			medium(firstname)
+		elif x==3:
+			menu.destroy()
+			hard(firstname)
+		else:
+			pass
 	
-    menu_canvas=Canvas(menu,width=720,height=440,bg="orange")
-    menu_canvas.pack()
-	
-    menu_frame=Frame(menu_canvas,bg="#8BBBF4")
-    menu_frame.place(relwidth=0.8,relheight=0.8,relx=0.1,rely=0.1)
-	
-    welcome = Label(menu_canvas,text=' W E L C O M E  T O  Q U I Z  S T A T I O N ',fg="white",bg="orange") 
-    welcome.config(font=('Broadway 22'))
-    welcome.place(relx=0.1,rely=0.02)
-    
-    firstname='Welcome '+ firstname
-    l1 = Label(menu_frame,text=firstname,bg="black",font="calibri 18",fg="white")
-    l1.place(relx=0.17,rely=0.15)
-    
-    level = Label(menu_frame,text='Select the desired Difficulty Level',bg="orange",font="calibri 18")
-    level.place(relx=0.25,rely=0.3)
-	
-    var = IntVar()
-    easyR=Radiobutton(menu_frame, text ="Easy",bg="#CFBB4B",font="calibri 16",value=1, variable=var)
-    easyR.place(relx=0.25,rely=0.4)
-    
-    mediumR=Radiobutton(menu_frame, text ="Medium",bg="#A2AB4B",font="calibri 16", value=2, variable=var)
-    mediumR.place(relx=0.25,rely=0.5)
-    
-    hardR=Radiobutton(menu_frame, text ="Hard",bg="#C5DB4B",font="calibri 16", value=3, variable=var)
-    hardR.place(relx=0.25,rely=0.6)
-	
-	
-    def nav():
-	
-        x=var.get()
-        print(x)
-        if x==1:
-            menu.destroy()
-            easy()
-        elif x==2:
-            menu.destroy()
-            medium()
-        elif x==3:
-            menu.destroy()
-            hard()
-        else:
-            pass
+	def ins():
+		inst = tk.Tk()
+		inst_canvas = Canvas(inst, width=820, height=440, bg="orange")
+		inst_canvas.pack()
+		inst_Label = Label(inst_canvas, text=' Game Instructions ', fg="white", bg="orange")
+		inst_Label.config(font=('Broadway 22'))
+		inst_Label.place(relx=0.1, rely=0.02)
+		inst_Label.place(relx=0.2, rely=0.03)
+		text = Text(inst_canvas)
+		text.insert(INSERT, "The rules are very simple!")
+		text.insert(INSERT, "\nYou should answer all the 5 geographical related questions correctly.")
+		text.insert(INSERT, "\nBy doing so you will gain 5/5 score! you can made it!\nyou can re-attempt to answer the quiz if you want.\nGood Luck!")
+		text.pack()
             
-    gamelaunch=Button(menu_frame,text="Launch Game",bg="black",fg="white",font="calibri 12",command=nav)
-    gamelaunch.place(relx=0.25,rely=0.8)
-    menu.mainloop()
+	gamelaunch=Button(menu_frame,text="Launch Game",bg="black",fg="white",font="calibri 12",command=navigate)
+	gamelaunch.place(relx=0.25,rely=0.8)
+	ins2=Button(menu_frame,text="Instructions",bg="black",fg="white",font="calibri 12",command=ins)
+	ins2.place(relx=0.25,rely=0.9)
+	menu.mainloop()
     
-def easy():
+def easy(firstname):
 
 	global easy
-	easy = Tk()
+	try:
+		easy.destroy()
+	except:
+		pass
+	easy = tk.Tk()
 	easy.title('Quiz App for easy level')
 	
 	easy_canvas = Canvas(easy,width=720,height=440,bg="orange")
@@ -259,10 +308,12 @@ def easy():
 	score = 0
 		
 	easyQ=[["What is the capital city of Japan?","Jerusalem","Tokyo","London","Paris"],
-			   ["What is the longest river in the world?","Jordan","Nille","Amazonas","Rein"],
-			   ["Which country is the most populated country in the world?","India","USA","Pakistan","China"]]
-	answer=["Tokyo","Nille","China"]
-	li=[0,1,2]
+			   ["What is the longest river in the world?","Jordan","Nile","Amazonas","Rhein"],
+			   ["Which country is the most populated in the world?","India","USA","Pakistan","China"],
+			   ["Which mountain is the highest in the world?","Hermon","Everest","Kilimanjaro","Table Mountain"],
+			   ["Which country is a former soviet union member?","France","Ukraine","Finland","Sweden"]]
+	answer=["Tokyo","Nile","China","Everest","Ukraine"]
+	li=[0,1,2,3,4]
 	x=random.choice(li[0:])
 		
 	ques=Label(easy_frame,text=easyQ[x][0],font="calibri 12",bg="orange")
@@ -290,7 +341,7 @@ def easy():
 		if len(li)==0:
 			try:
 				easy.destroy()
-				showGraph(score)
+				showGraph(score,firstname)
 			except:
 				pass
 				
@@ -331,10 +382,15 @@ def easy():
 		display()
 	easy.mainloop()
 		
-def medium():
-    
+def medium(firstname):
 	global medium
-	medium = Tk()
+	try:
+		medium.destroy()
+	except:
+		pass
+	
+	
+	medium = tk.Tk()
 	medium.title('Quiz App for Medium level')
     
 	med_canvas = Canvas(medium,width=720,height=440,bg="#101357")
@@ -342,8 +398,10 @@ def medium():
 
 	med_frame = Frame(med_canvas,bg="#A1A100")
 	med_frame.place(relwidth=0.8,relheight=0.8,relx=0.1,rely=0.1)
+	
+	timer = Label(medium)
+	timer.place(relx=0.8,rely=0.82,anchor=CENTER)
 
-    
 	def countDown():
 		check=0
 		for i in range(10,0,-1):
@@ -388,11 +446,24 @@ def medium():
                     "Germany",
                     "England",
                     "Italy"
+                ],
+				[
+                    "In which country there are no volcano mountains at all?",
+                    "Iceland",
+                    "Italy",
+                    "USA",
+                    "Belarus"
+                ],
+				[	"What is lowest place on earth (on land)?",
+                    "Grand canyon (USA)",
+                    "Dead sea (Israel and Jordan)",
+                    "Sea of galilee (Israel)",
+                    "Salar de Uyuni (Bolivia)"
                 ]
             ]
-	answer =["Canada","Asia","Italy"]
+	answer =["Canada","Asia","Italy","Belarus","Dead sea (Israel and Jordan)"]
         
-	li = [0,1,2]
+	li = [0,1,2,3,4]
 	x = random.choice(li[0:])
     
 	ques = Label(med_frame,text =mediumQ[x][0],font="calibri 12",bg="#B26500")
@@ -422,7 +493,7 @@ def medium():
 		if len(li) == 0:
 			try:
 				medium.destroy()
-				showGraph(score)
+				showGraph(score,firstname)
 			except:
 				pass
 		if len(li) == 1:
@@ -464,10 +535,14 @@ def medium():
 		display()
 	medium.mainloop()
 				
-def hard():
-    
+def hard(firstname):
 	global hard
-	hard = Tk()
+	try:
+		hard.destroy()
+	except:
+		pass
+	
+	hard = tk.Tk()
 	hard.title('Quiz App for Hard level')
     
 	hard_canvas = Canvas(hard,width=720,height=440,bg="#101357")
@@ -503,7 +578,7 @@ def hard():
     
 	hardQ = [
                 [
-                    "What is the approx. population of Israel??",
+                    "What is the approx. population of Israel?",
                      "9.5M",
                      "6.7M",
                      "12.9M",
@@ -517,20 +592,36 @@ def hard():
                     "Japan"
                 ],
                 [
-                    "Between which countries Lake constanz is located?",
-                    "Swiss ang Germany",
+                    "Between which countries Konstanz Lake is located?",
+                    "Switzerland and Germany",
                     "Germany and Austria",
                     "France and Spain",
                     "Sweden and Finland"
+                ],
+				[
+                    "Which country from the following countries contains a part of the Sahara desert?",
+                    "Ghana",
+                    "Morocco",
+                    "Tanzania",
+                    "South Africa"
+                ],
+				[
+                    "What is the approx. territory of Israel?",
+                    "22,000[km^2]",
+                    "13,000[km^2]",
+                    "125,000[km^2]",
+                    "241,000[km^2]"
                 ]
             ]
 	answer = [
             "9.5M",
             "Russia",
-            "Swiss ang Germany",
+            "Switzerland and Germany",
+			"Morocco",
+			"22,000[km^2]"
             ]
     
-	li = [0,1,2]
+	li = [0,1,2,3,4]
 	x = random.choice(li[0:])
     
 	ques = Label(hard_frame,text =hardQ[x][0],font="calibri 12",bg="#B26500")
@@ -557,7 +648,7 @@ def hard():
 		if len(li) == 0:
 			try:
 				hard.destroy()
-				showGraph(score)
+				showGraph(score,firstname)
 			except:
 				pass
 		if len(li) == 1:
@@ -599,59 +690,45 @@ def hard():
 		display()
 	hard.mainloop()
 	
-def showGraph(graph):
-    showg=Tk()
-    showg.title('Your Marks')
+def showGraph(graph,firstname):
+	showg=tk.Tk()
+	showg.title('Your Marks')
 	
-    score="The final score is:" + str(graph)+"/3"
-    marklabel=Label(showg,text=score,fg="black",bg="white")
-    marklabel.pack()
+	score="The final score is:" + str(graph)+"/5"
+	marklabel=Label(showg,text=score,fg="black",bg="white")
+	marklabel.pack()
 	
-    def signUpPageCall():
-        showg.destroy()
-        launch()
-	#Here you can choose which difficulty level will be implemented (Should be updated).
-    def easylaunch():
-        showg.destroy()
-        easy()
+	def signUpPageCall():
+		showg.destroy()
+		launch()
+	# Here you can choose which difficulty level will be implemented (Should be updated).
+	def easylaunch():
+		showg.destroy()
+		mainmenu(firstname)
 	
-    re=Button(text="Re-attempt",command=easylaunch,bg="black",fg="white")
-    re.pack()
+	re=Button(text="Re-attempt",command=easylaunch,bg="black",fg="white")
+	re.pack()
     
-    from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
-    from matplotlib.backend_bases import key_press_handler
-    from matplotlib.figure import Figure
+	from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
+	from matplotlib.backend_bases import key_press_handler
+	from matplotlib.figure import Figure
 
-    import numpy as np
+	import numpy as np
 
-    fig = Figure(figsize=(5, 4), dpi=100)
-    labels = 'Marks Obtained','Total Marks'
-    sizes = [int(graph),3-int(graph)]
-    explode = (0.1,0)
-    fig.add_subplot(111).pie(sizes, explode=explode, labels=labels, autopct='%1.1f%%',shadow=True, startangle=0)
-    canvas = FigureCanvasTkAgg(fig, master=showg)  # A tk.DrawingArea.
-    canvas.draw()
-    canvas.get_tk_widget().pack(side=TOP, fill=BOTH, expand=1)
+	fig = Figure(figsize=(5, 4), dpi=100)
+	labels = 'Marks Obtained','Total Marks'
+	sizes = [int(graph),5-int(graph)]
+	explode = (0.1,0)
+	fig.add_subplot(111).pie(sizes, explode=explode, labels=labels, autopct='%1.1f%%',shadow=True, startangle=0)
+	canvas = FigureCanvasTkAgg(fig, master=showg)  # A tk.DrawingArea.
+	canvas.draw()
+	canvas.get_tk_widget().pack(side=TOP, fill=BOTH, expand=1)
     
-    b23=Button(text="Sign Out",command=signUpPageCall,fg="white", bg="black")
-    b23.pack()
+	b23=Button(text="Sign Out",command=signUpPageCall,fg="white", bg="black")
+	b23.pack()
     
-    showg.mainloop()
+	showg.mainloop()
 	
-def launch():
-	global mainpage 
-	mainpage = Tk()
-	mainpage.title('Welcome to Geographical knowledge quiz App')
-	canvas = Canvas(mainpage,width = 900,height = 600, bg = 'purple')
-	canvas.grid(column = 0 , row = 1)
-	img = PhotoImage(file="output-onlinepngtools.png")
-	canvas.create_image(50,10,image=img,anchor=NW)
-
-	button = Button(mainpage, text='Play Now',command = Logging,bg="red",fg="yellow") 
-	button.configure(width = 102,height=4, activebackground = "#6BF5F5", relief = SUNKEN)
-	button.grid(column = 0 , row = 2)
-
-	mainpage.mainloop()
-    
 if __name__=='__main__':
     launch()
+	
